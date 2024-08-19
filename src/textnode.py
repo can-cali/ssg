@@ -1,4 +1,8 @@
 from htmlnode import LeafNode
+from extract_md import (
+    extract_markdown_images,
+    extract_markdown_links,
+)
 
 text_type_text = "text"
 text_type_bold = "bold"
@@ -58,4 +62,26 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
                 n = TextNode(partitions[i], text_type)
                 split_nodes.append(n)
         new_nodes.extend(split_nodes)
+    return new_nodes
+
+#wow this was hard
+def split_nodes_image(old_nodes):
+    new_nodes = []
+    for node in old_nodes:
+        ext = extract_markdown_images(node.text)
+        if not ext:
+            new_nodes.append(node)
+            continue
+        current_text = node.text
+        for alt, url in ext:
+            partitions = current_text.split(f"![{alt}]({url})", 1)
+            if partitions[0]:
+                n = TextNode(partitions[0], text_type_text)
+                new_nodes.append(n)
+            n1 = TextNode(alt, text_type_image, url)
+            new_nodes.append(n1)
+            current_text = partitions[1] if len(partitions) > 1 else ""
+        if current_text:
+            n = TextNode(current_text, text_type_text)
+            new_nodes.append(n)
     return new_nodes
